@@ -23,9 +23,14 @@ else: unix:!android: target.path = /opt/$${TARGET}/bin
 !isEmpty(target.path): INSTALLS += target
 
 # liba
-win32:CONFIG(release, debug|release): LIBS += -L$$PWD/../build-GF_polynom-Desktop_Qt_5_15_2_MinGW_64_bit-Debug/release/ -lGF_polynom
-else:win32:CONFIG(debug, debug|release): LIBS += -L$$PWD/../build-GF_polynom-Desktop_Qt_5_15_2_MinGW_64_bit-Debug/debug/ -lGF_polynom
-else:unix: LIBS += -L$$PWD/../build-GF_polynom-Desktop_Qt_5_15_2_MinGW_64_bit-Debug/ -lGF_polynom
+#win32:CONFIG(release, debug|release): LIBS += -L$$PWD/../build-GF_polynom-Desktop_Qt_5_15_2_MinGW_64_bit-Debug/release/ -lGF_polynom
+#else:win32:CONFIG(debug, debug|release): LIBS += -L$$PWD/../build-GF_polynom-Desktop_Qt_5_15_2_MinGW_64_bit-Debug/debug/ -lGF_polynom
+#else:unix: LIBS += -L$$PWD/../build-GF_polynom-Desktop_Qt_5_15_2_MinGW_64_bit-Debug/ -lGF_polynom
+
+#INCLUDEPATH += $$PWD/../build-GF_polynom-Desktop_Qt_5_15_2_MinGW_64_bit-Debug/debug
+#DEPENDPATH += $$PWD/../build-GF_polynom-Desktop_Qt_5_15_2_MinGW_64_bit-Debug/debug
+
+unix|win32: LIBS += -L$$PWD/../build-GF_polynom-Desktop_Qt_5_15_2_MinGW_64_bit-Debug/debug/ -lGF_polynom
 
 INCLUDEPATH += $$PWD/../build-GF_polynom-Desktop_Qt_5_15_2_MinGW_64_bit-Debug/debug
 DEPENDPATH += $$PWD/../build-GF_polynom-Desktop_Qt_5_15_2_MinGW_64_bit-Debug/debug

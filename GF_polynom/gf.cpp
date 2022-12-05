@@ -230,7 +230,7 @@ void GF::get_revs(){
 	_revs.resize(_elements.size(), 0);
 	for(size_t i = 1; i < _revs.size(); i++){
 		if(!_revs[i])
-			for(size_t ii = i + 1; ii < _elements.size(); ii++)
+			for(size_t ii = i; ii < _elements.size(); ii++)
 				if((_elements[i] + _elements[ii])._power == -1){
 					_revs[i] = ii;
 					_revs[ii] = i;

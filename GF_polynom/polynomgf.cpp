@@ -13,7 +13,6 @@ void PolynomGF::append(const GF::Element& e, int p){
 	if(_gf->check_and_set_element(in)) _vals[p] = in;
 }
 
-
 PolynomGF PolynomGF::add(const PolynomGF& p){
 	PolynomGF out(*this);
 
@@ -24,6 +23,7 @@ PolynomGF PolynomGF::add(const PolynomGF& p){
 
 		if(out._vals[i->first] == zero) out._vals.erase(i->first);
 	}
+	if(out._vals.empty()) out._vals[0] = zero;
 
 	return out;
 }
@@ -39,6 +39,7 @@ PolynomGF PolynomGF::sub(const PolynomGF& p){
 
 		if(out._vals[i->first] == zero) out._vals.erase(i->first);
 	}
+	if(out._vals.empty()) out._vals[0] = zero;
 
 	return out;
 }
@@ -55,6 +56,7 @@ PolynomGF PolynomGF::mul(const PolynomGF& p){
 
 			if(out._vals[pt] == zero) out._vals.erase(pt);
 		}
+		if(out._vals.empty()) out._vals[0] = zero;
 	}
 	return out;
 }
@@ -75,12 +77,13 @@ PolynomGF PolynomGF::div(const PolynomGF& p){
 			t._vals[p1 + i->first] = k1 * i->second;
 
 		r -= t;
-		//r -= (PolynomGF)p * k1;
 		k.append(k1, p1);
 	}
 	return k;
 }
 
+// x^3 + x + 1
+// {1 1 1}x^3 + {1 1}x^2
 std::tuple<PolynomGF, PolynomGF> PolynomGF::div_with_rem(const PolynomGF& p){
 	PolynomGF r(*this);
 	PolynomGF k(_gf);
@@ -94,7 +97,6 @@ std::tuple<PolynomGF, PolynomGF> PolynomGF::div_with_rem(const PolynomGF& p){
 			t._vals[p1 + i->first] = k1 * i->second;
 
 		r -= t;
-		//r -= (PolynomGF)p * k1;
 		k.append(k1, p1);
 	}
 
