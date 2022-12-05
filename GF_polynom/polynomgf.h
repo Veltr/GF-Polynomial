@@ -16,6 +16,8 @@ public:
 
 	void append(const GF::Element&, int p);
 
+	GF::Element calc_value(const GF::Element&);
+
 	PolynomGF add(const PolynomGF&);
 	PolynomGF sub(const PolynomGF&);
 	PolynomGF mul(const PolynomGF&);
@@ -37,6 +39,9 @@ public:
 
 	PolynomGF operator/(const PolynomGF&);
 	PolynomGF operator/=(const PolynomGF&);
+
+	GF::Element get_by_power(int);
+	GF::Element& operator[](int);
 
 	friend GF_POLYNOM_EXPORT std::ostream& operator<<(std::ostream&, const PolynomGF&);
 

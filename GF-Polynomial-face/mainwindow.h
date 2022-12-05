@@ -28,6 +28,7 @@ public:
 
 private slots:
 	void build_gf();
+	void calc_px();
 
 private:
 	GF* _gf = NULL;
@@ -41,8 +42,13 @@ private:
 	QLineEdit* _p2;
 	QTextEdit* _pr;
 
+	QLineEdit* _px;
+	QTextEdit* _px_out;
+
+
 	void do_action(PolynomGF(PolynomGF::*)(const PolynomGF&));
 	QLayout* get_gf_ui();
 	QLayout* get_pol_ui();
+	QLayout* get_px_ui();
 };
 #endif // MAINWINDOW_H

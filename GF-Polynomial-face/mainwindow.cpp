@@ -6,7 +6,9 @@ MainWindow::MainWindow(QWidget *parent) : QMainWindow(parent){
 	auto sp = new QSplitter(Qt::Horizontal);
 	auto w1 = new QWidget(); w1->setLayout(get_pol_ui());
 	auto w2 = new QWidget(); w2->setLayout(get_gf_ui());
+	auto w3 = new QWidget(); w3->setLayout(get_px_ui());
 	sp->addWidget(w1);
+	sp->addWidget(w3);
 	sp->addWidget(w2);
 
 	sp->setStyleSheet("QSplitter::handle{background: #999999;}"
@@ -41,24 +43,10 @@ QList<int> parse_line(const QString& str, char c = 'x'){
 	return out.toList();
 }
 
-void MainWindow::build_gf(){
-	//_gf = new GF(_mode->value(), _power->value()); _gf->build_GF(parse_line(_pol->text()).toStdList());
-	_gf = new GF(_mode->value(), _power->value());
-	auto t = parse_line(_pol->text());
-	_gf->build_GF(std::list<int>(t.begin(), t.end()));
-
-	std::ostringstream s;
-	_gf->print_GF(s);
-	_gf_text->setPlainText(QString::fromStdString(s.str()));
-}
-
 PolynomGF parse_pol(const QString& str, GF* gf){
 	QRegExp rx("(?:(?:(\\{[^\\}]+\\})|(\\([^\\)]+\\))|(a\\^\\d+))(?:(\\s*x(?:(?:\\^(\\d*))|(?:.)|(?:\\s*$)))|(?:\\s+)|(?:\\s*$)))");
 	QRegExp rx1_1("(?:(\\d+)(?:(?:\\s+)|(?:\\S+\\s*)))"); // {...}
 	QRegExp rx1_2("(?:a\\^)(\\d+)"); // a^
-	//QStringList list;
-	//QVector<GF::Element> out;
-	//QMap<int, GF::Element> map;
 	std::map<int, GF::Element> map;
 	int pos = 0;
 
@@ -98,13 +86,30 @@ PolynomGF parse_pol(const QString& str, GF* gf){
 
 	if(!map.size()) return nullptr;
 
-//	auto i = map.rbegin();
-//	int size = i->first + 1;
-//	QVector<GF::Element> out(size, gf->get_element_by_power(-1));
-//	for(; i != map.rend(); i++) out[size - i->first - 1] = i->second;
-
-	//return PolynomGF_old(gf, std::list<GF::Element>(out.begin(), out.end()));
 	return PolynomGF(gf, map);
+}
+
+void MainWindow::build_gf(){
+	//_gf = new GF(_mode->value(), _power->value()); _gf->build_GF(parse_line(_pol->text()).toStdList());
+	_gf = new GF(_mode->value(), _power->value());
+	auto t = parse_line(_pol->text());
+	_gf->build_GF(std::list<int>(t.begin(), t.end()));
+
+	std::ostringstream s;
+	_gf->print_GF(s);
+	_gf_text->setPlainText(QString::fromStdString(s.str()));
+}
+
+void MainWindow::calc_px(){
+	PolynomGF p1 = parse_pol(_p1->text(), _gf);
+	GF::Element px = (parse_pol(_px->text(), _gf)).get_by_power(0);
+//	PolynomGF p2 = parse_pol(_px->text(), _gf);
+//	GF::Element px = p2.get_by_power(0);
+
+	std::ostringstream s;
+	s << "p = " << p1 << "\nx = " << px << "\np(x) = " << p1.calc_value(px);
+	//s << p1.calc_value(px);
+	_px_out->setPlainText(QString::fromStdString(s.str()));
 }
 
 void MainWindow::do_action(PolynomGF(PolynomGF::*action)(const PolynomGF&)){
@@ -209,6 +214,25 @@ QLayout* MainWindow::get_pol_ui(){
 	//out->addWidget(l);
 	out->addLayout(h3);
 
+	return out;
+}
+
+QLayout* MainWindow::get_px_ui(){
+	auto out = new QVBoxLayout();
+
+	auto h1 = new QHBoxLayout();
+	h1->addWidget(new QLabel("x"));
+	h1->addWidget(_px = new QLineEdit());
+
+	auto h2 = new QHBoxLayout();
+	h2->addWidget(new QLabel("p1(x)"));
+	h2->addWidget(_px_out = new QTextEdit());
+	auto b4 = new QPushButton("Calc p1(x)");
+	connect(b4, &QPushButton::clicked, this, &MainWindow::calc_px);
+	h2->addWidget(b4);
+
+	out->addLayout(h1);
+	out->addLayout(h2);
 	return out;
 }
 

@@ -13,6 +13,18 @@ void PolynomGF::append(const GF::Element& e, int p){
 	if(_gf->check_and_set_element(in)) _vals[p] = in;
 }
 
+GF::Element PolynomGF::calc_value(const GF::Element& e){
+	GF::Element out = _gf->get_element_by_power(-1);
+
+	for(auto i = _vals.begin(); i != _vals.end(); i++){
+		GF::Element t = _gf->get_element_by_power(0);
+		for(int ii = 0; ii < i->first; ii++) t *= e;
+		out += t * i->second;
+	}
+
+	return out;
+}
+
 PolynomGF PolynomGF::add(const PolynomGF& p){
 	PolynomGF out(*this);
 
@@ -82,8 +94,6 @@ PolynomGF PolynomGF::div(const PolynomGF& p){
 	return k;
 }
 
-// x^3 + x + 1
-// {1 1 1}x^3 + {1 1}x^2
 std::tuple<PolynomGF, PolynomGF> PolynomGF::div_with_rem(const PolynomGF& p){
 	PolynomGF r(*this);
 	PolynomGF k(_gf);
@@ -148,6 +158,14 @@ PolynomGF PolynomGF::operator/(const PolynomGF& p){
 PolynomGF PolynomGF::operator/=(const PolynomGF& p){
 	*this = *this / p;
 	return *this;
+}
+
+GF::Element PolynomGF::get_by_power(int n){
+	return _vals[n];
+}
+
+GF::Element& PolynomGF::operator[](int n){
+	return _vals[n];
 }
 
 #define _x(n) << (n >= 1 ? "x" : "") << (n >= 2 ? "^" + std::to_string(n) : "")
