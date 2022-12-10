@@ -151,17 +151,22 @@ void GF::build_GF(const std::list<int>& m0){
 		build_GF_n1(_mode-*(--m0.end()));
 		return;
 	}
+
+	if(!check_polynom(m0)){ throw std::runtime_error("Polynom isn't primitive"); return; }
+
 	for(auto i = (++m0.begin()); i != m0.end(); i++) {
 		int t = (-(*i)) % _mode;
 		if(t < 0) t += _mode;
 		_m.push_back(t);
 	}
 
+	_cur_build_step++;
 	_elements.push_back(Element({0}, this, -1));
 	_elements.push_back(Element({1}, this, 0));
 	_elements.push_back(Element({1, 0}, this, 1));
 
 	for(size_t i = 3, size = pow(_mode, _p); i < size; i++){
+		_cur_progress = (float)i / size;
 		Element cur(_elements[i - 1]);
 		cur._power = i - 1;
 		cur._value.push_back(0);
@@ -180,16 +185,29 @@ void GF::build_GF(const std::list<int>& m0){
 }
 
 void GF::build_GF(){
-	if(_p != 1) return;
+	if(_p != 1) throw std::runtime_error("power != 1");
 
 	if(_mode == 2){
 		_elements.push_back(Element({0}, this, -1));
-		_elements.push_back(Element({1}, this, 1));
+		_elements.push_back(Element({1}, this, 0));
 		_m.push_back(1);
+		_cur_progress = 1;
+		get_revs();
+		return;
+	}
+
+	if(_mode == 3){
+		_elements.push_back(Element({0}, this, -1));
+		_elements.push_back(Element({1}, this, 0));
+		_elements.push_back(Element({2}, this, 1));
+		_m.push_back(2);
+		_cur_progress = 1;
+		get_revs();
 		return;
 	}
 
 	for(int i = 2; i < _mode - 1;){
+		_cur_progress = (float)i / (_mode - 1);
 		if(mode_power(i, _mode - 1, _mode) == 1){
 			for(int ii = i, k = 1; k < _mode - 2; ii = (ii * i) % _mode, k++) if(ii == 1) goto skip1;
 			build_GF_n1(i);
@@ -197,6 +215,7 @@ void GF::build_GF(){
 		}
 skip1: i++;
 	}
+	throw std::runtime_error("No generators found");
 }
 
 bool GF::operator==(const GF& g){
@@ -212,6 +231,7 @@ std::ostream& GF::print_GF(std::ostream& out){
 }
 
 std::ostream& operator<<(std::ostream& out, const GF& e){
+	if(e._elements.size() < 2) return out;
 	out << "0) 0\n1) 1\n";
 	for(size_t i = 2; i < e._elements.size(); i++){
 		out << "a^" << i - 1 << ") ";
@@ -227,16 +247,20 @@ int GF::get_power(Element& e){
 }
 
 void GF::get_revs(){
+	_cur_build_step++;
 	_revs.resize(_elements.size(), 0);
 	for(size_t i = 1; i < _revs.size(); i++){
 		if(!_revs[i])
 			for(size_t ii = i; ii < _elements.size(); ii++)
 				if((_elements[i] + _elements[ii])._power == -1){
+					_cur_progress = (float)i / _revs.size() * 2;
 					_revs[i] = ii;
 					_revs[ii] = i;
 					break;
 				}
 	}
+	_cur_progress = 1;
+	_cur_build_step++;
 	return;
 }
 
@@ -249,26 +273,76 @@ bool GF::check_and_set_element(Element& e){
 }
 
 void GF::build_GF_n1(int m){
+	_cur_build_step++;
 	_m.push_back(m);
 	_elements.push_back(Element({0}, this, -1));
 	_elements.push_back(Element({1}, this, 0));
 
 	for(int i = 2, t = m; i < _mode; i++){
+		_cur_progress = (float)i / _mode;
 		_elements.push_back(Element({t}, this, i - 1));
 		t = (t * m) % _mode;
 	}
 	get_revs();
 }
 
+bool GF::check_polynom(const std::list<int>& list){
+	GF g1(_mode, 1); g1.build_GF();
+	int pp = list.size() - 1;
+	std::map<int, GF::Element> mapa;
+	for(auto i = list.begin(); i != list.end(); i++, pp--){
+		if(*i != 0)
+			mapa[pp] = g1.get_element(std::list<int>{*i});
+	}
+	_cur_progress = 0.1;
+	PolynomGF p1((GF*)&g1, mapa);
+
+	pp = pow(_mode, _p) - 1;
+	GF::Element mOne = g1.get_element({_mode - 1});
+	GF::Element one = g1.get_element_by_power(0);
+	PolynomGF ppn((GF*)&g1, {{pp, one}, {0, mOne}});
+	auto[k0, r] = ppn.div_with_rem(p1);
+	if(!r.is_zero()) return false;
+
+	for(int k = 1; k < pp; k++){
+		_cur_progress = (k + 1) / pp;
+		PolynomGF pk((GF*)&g1, {{k, one}, {0, mOne}});
+		auto[k0, r] = p1.div_with_rem(pk);
+		if(r.is_zero()) return false;
+		auto[k1, r2] = pk.div_with_rem(p1);
+		if(r2.is_zero()) return false;
+	}
+
+	_cur_build_step++;
+	return true;
+}
+
 GF::Element GF::get_rev(const Element& e){
 	return _elements[_revs[e._power + 1]];
 }
+
+GF::BuildProgress GF::get_build_progress(){
+	BuildProgress out;
+	out.first = (float)_cur_build_step / _build_steps_number;
+	out.second = _cur_progress;
+
+	if(!_cur_build_step){
+		if(_p > 1) out.msg = "Checking is polynom is primitive...";
+		else out.msg = "Finding generator...";
+	}
+	else if(_cur_build_step == 1) out.msg = "Building elements...";
+	else out.msg = "Getting reverse elements...";
+
+	return out;
+}
+
 
 GF::Element GF::get_element(const std::list<int>& value){
 	return *std::find_if(_elements.begin(), _elements.end(), [value](const GF::Element& e){return e._value == value;});
 }
 
 GF::Element GF::get_element_by_power(int power){
+	if(_mode == 2 && _p == 1) return _elements[power + 1];
 	return _elements[power % ((int)pow(_mode, _p) - 1) + 1];
 }
 

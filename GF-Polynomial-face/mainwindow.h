@@ -3,6 +3,7 @@
 
 #include "../GF_polynom/gf.h"
 #include "../GF_polynom/polynomgf.h"
+#include "gfbuildingwindow.h"
 
 #include <QMainWindow>
 #include <QVBoxLayout>
@@ -17,6 +18,8 @@
 #include <QSplitter>
 #include <QVector>
 #include <QMap>
+#include <thread>
+#include <future>
 
 
 class MainWindow : public QMainWindow {

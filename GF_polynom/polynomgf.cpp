@@ -25,6 +25,11 @@ GF::Element PolynomGF::calc_value(const GF::Element& e){
 	return out;
 }
 
+bool PolynomGF::is_zero(){
+	if(_vals.size() > 1) return false;
+	return (_vals.begin()->first == 0) && (_vals.begin()->second == _gf->get_element_by_power(-1));
+}
+
 PolynomGF PolynomGF::add(const PolynomGF& p){
 	PolynomGF out(*this);
 

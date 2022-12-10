@@ -17,6 +17,7 @@ public:
 	void append(const GF::Element&, int p);
 
 	GF::Element calc_value(const GF::Element&);
+	bool is_zero();
 
 	PolynomGF add(const PolynomGF&);
 	PolynomGF sub(const PolynomGF&);

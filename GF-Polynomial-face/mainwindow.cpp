@@ -3,17 +3,42 @@
 #include <map>
 
 MainWindow::MainWindow(QWidget *parent) : QMainWindow(parent){
-	auto sp = new QSplitter(Qt::Horizontal);
 	auto w1 = new QWidget(); w1->setLayout(get_pol_ui());
 	auto w2 = new QWidget(); w2->setLayout(get_gf_ui());
 	auto w3 = new QWidget(); w3->setLayout(get_px_ui());
-	sp->addWidget(w1);
-	sp->addWidget(w3);
-	sp->addWidget(w2);
 
+	auto sp = new QSplitter(Qt::Horizontal);
 	sp->setStyleSheet("QSplitter::handle{background: #999999;}"
 					  "QSplitter::handle:vertical{height: 3px;}");
+
+	auto sp2 = new QSplitter(Qt::Horizontal);
+	sp2->setStyleSheet("QSplitter::handle{background: #999999;}"
+					  "QSplitter::handle:vertical{height: 3px;}");
+
+	/*sp->addWidget(w1);
+	sp->addWidget(w3);
+	sp->addWidget(w2);*/
+
+	sp2->addWidget(w1);
+	sp2->addWidget(w3);
+
+	auto h1 = new QHBoxLayout();
+	h1->addWidget(new QLabel("p1"));
+	h1->addWidget(_p1 = new QLineEdit());
+	_p1->setPlaceholderText("Example: {1, 2 3}x^3 + (2a^2 + 1)x^2 + a^3 x");
+
+	auto v1 = new QVBoxLayout();
+	v1->addLayout(h1);
+	v1->addWidget(sp2);
+
+	auto w4 = new QWidget(); w4->setLayout(v1);
+
+	//sp->addWidget(sp2);
+	sp->addWidget(w4);
+	sp->addWidget(w2);
+
 	setCentralWidget(sp);
+	setWindowTitle("Полиномы над GF");
 }
 
 MainWindow::~MainWindow(){
@@ -90,14 +115,48 @@ PolynomGF parse_pol(const QString& str, GF* gf){
 }
 
 void MainWindow::build_gf(){
-	//_gf = new GF(_mode->value(), _power->value()); _gf->build_GF(parse_line(_pol->text()).toStdList());
-	_gf = new GF(_mode->value(), _power->value());
+	/*_gf = new GF(_mode->value(), _power->value());
 	auto t = parse_line(_pol->text());
-	_gf->build_GF(std::list<int>(t.begin(), t.end()));
+	try { _gf->build_GF(std::list<int>(t.begin(), t.end()));}
+	catch (const std::exception& e) {
+		_gf_text->setPlainText(QString::fromStdString(e.what()));
+		return;
+	}
+
+	//auto f = std::async(std::launch::async, [&]{_gf->build_GF(std::list<int>(t.begin(), t.end()));});
 
 	std::ostringstream s;
+
+	//f.get();
 	_gf->print_GF(s);
-	_gf_text->setPlainText(QString::fromStdString(s.str()));
+	_gf_text->setPlainText(QString::fromStdString(s.str()));*/
+
+	//_p1->setText("sas");
+//	auto w = new GfBuildingWindow(_gf, this);
+//	//w->show();
+//	//connect(w, &GfBuildingWindow::sending_result, this, &MainWindow::end_building_gf);
+//	connect(w, &GfBuildingWindow::sending_result, this, [&]{ _p2->setText(w->get_result()); });
+//	w->exec();
+//	//_gf_text->setPlainText(QString::number(w->result()));
+//	delete w;
+//	//_p2->setText("yeee");
+
+	_gf = new GF(_mode->value(), _power->value());
+	auto t = parse_line(_pol->text());
+
+	auto w = new GfBuildingWindow(_gf, std::list<int>(t.begin(), t.end()), this);
+	//connect(w, &GfBuildingWindow::sending_result, this, [&]{ _p2->setText(w->get_result()); });
+	if(w->Rejected == w->exec()){
+		delete _gf;
+		_gf_text->setPlainText("Canceled\n" + w->get_result());
+	}
+	else{
+		std::ostringstream s;
+
+		_gf->print_GF(s);
+		_gf_text->setPlainText(QString::fromStdString(s.str()));
+	}
+	delete w;
 }
 
 void MainWindow::calc_px(){
@@ -144,6 +203,7 @@ QLayout* MainWindow::get_gf_ui(){
 	h1->addWidget(new QLabel("Mode"));
 	h1->addWidget(_mode = new QSpinBox());
 	_mode->setMinimum(2);
+	_mode->setMaximum(100000);
 
 	auto h2 = new QHBoxLayout();
 	h2->addWidget(new QLabel("Power"));
@@ -153,6 +213,7 @@ QLayout* MainWindow::get_gf_ui(){
 	auto h3 = new QHBoxLayout();
 	h3->addWidget(new QLabel("Polynom"));
 	h3->addWidget(_pol = new QLineEdit());
+	_pol->setPlaceholderText("x^4 + 5x^3 + 2x + 1");
 
 	g->addLayout(h1, 0, 0);
 	g->addLayout(h2, 0, 1);
@@ -174,9 +235,10 @@ QLayout* MainWindow::get_gf_ui(){
 QLayout* MainWindow::get_pol_ui(){
 	auto out = new QVBoxLayout();
 
-	auto h1 = new QHBoxLayout();
-	h1->addWidget(new QLabel("p1"));
-	h1->addWidget(_p1 = new QLineEdit());
+//	auto h1 = new QHBoxLayout();
+//	h1->addWidget(new QLabel("p1"));
+//	h1->addWidget(_p1 = new QLineEdit());
+//	_p1->setPlaceholderText("Example: {1, 2 3}x^3 + (2a^2 + 1)x^2 + a^3 x");
 
 	auto h2 = new QHBoxLayout();
 	h2->addWidget(new QLabel("p2"));
@@ -207,11 +269,9 @@ QLayout* MainWindow::get_pol_ui(){
 	connect(b4, &QPushButton::clicked, this, [&]{ do_action(&PolynomGF::operator/); });
 	hb->addWidget(b4);
 
-	out->addLayout(h1);
-	out->addLayout(hb);
+	//out->addLayout(h1);
 	out->addLayout(h2);
-	//auto l = new QLabel("====="); l->setAlignment(Qt::AlignCenter);
-	//out->addWidget(l);
+	out->addLayout(hb);
 	out->addLayout(h3);
 
 	return out;
